@@ -6,9 +6,11 @@ public class CameraSwitch : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera _3DCamera;
     [SerializeField] private CinemachineCamera _2DCamera;
+    [HideInInspector] public bool is2DCamera = false;
     public void Switch()
     {
-        if (_3DCamera.Priority > _2DCamera.Priority)
+        is2DCamera = !is2DCamera;
+        if (is2DCamera)
         {
             _2DCamera.Priority = 1;
             _3DCamera.Priority = 0;
