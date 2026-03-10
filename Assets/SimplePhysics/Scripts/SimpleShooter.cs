@@ -11,6 +11,7 @@ public class SimpleShooter : MonoBehaviour
     public float speed = 20f;
     public float rotationSpeed = 5f;
     public float mass = 1f;
+    public float yAxisOffset = 2f;
     public Vector3 scale = Vector3.one;
     public bool randomRotation = true;
 
@@ -38,7 +39,7 @@ public class SimpleShooter : MonoBehaviour
         else
             targetPoint = ray.origin + ray.direction * 1000f;
 
-        Vector3 direction = (targetPoint - spawnPos).normalized;
+        Vector3 direction = (targetPoint - spawnPos).normalized + Vector3.up * yAxisOffset;
 
         Quaternion rot = randomRotation ? Random.rotation : Quaternion.LookRotation(direction);
 
