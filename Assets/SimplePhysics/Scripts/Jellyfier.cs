@@ -1,36 +1,54 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// This script is used to simulate a jelly-like behavior on a mesh.
+/// It applies pressure to the vertices of the mesh, causing them to move and deform the mesh.
+/// </summary>
 public class Jellyfier : MonoBehaviour
 {
-	//A value that describes how fast our jelly object will be bouncing
-    public float jiggle;
-    public float viscocity;
+    [Header("Original Settings")]
+    /// <summary>
+    /// The amount of jiggle applied to the vertices.
+    /// Higher values will cause more random movement of the vertices.
+    /// </summary>
+    [SerializeField] private float jiggle = 75f;
 
-    //We need this value to eventually stop bouncing back and forth.
-    public float elasticity;
+    /// <summary>
+    /// The amount of viscosity applied to the vertices.
+    /// Higher values will cause the vertices to move slower.
+    /// </summary>
+    [SerializeField] private float viscocity = 20f;
 
-    //We need our Meshfilter to get a hold of the mesh;
+    /// <summary>
+    /// The amount of elasticity applied to the vertices.
+    /// Higher values will cause the vertices to bounce back more when they are pushed.
+    /// </summary>
+    [SerializeField] private float elasticity = 1f;
+
+    [Header("Modifiers")]
+    /// <summary> 
+    /// The maximum amount of jiggle applied to the vertices.
+    /// </summary>
+    [SerializeField] private float maxViscocity = 100f;
+
+    [Header("References")]
+    [SerializeField] private Squeeze squeeze;
+
+    private float currentViscocity;
     private MeshFilter meshFilter;
     private Mesh mesh;
 
-
-    //We need to keep track of our vertices. 
-    //This means not only the current stat of them but also there original position and so forth;
     Vector3[] initialVertices;
     Vector3[] currentVertices;
-
     Vector3[] vertexVelocities;
 
     private void Awake()
     {
         meshFilter = GetComponent<MeshFilter>();
         mesh = meshFilter.mesh;
-        //fallForce = Random.Range(25, 80);
-
-        //Getting our vertices (initial and their current state(which is initial since we havent done anything yet, duh))
         initialVertices = mesh.vertices;
+        currentViscocity = viscocity;
 
-        //Obviously we are never changing the actual count of vertices so these two Arrays will always have the same length
         currentVertices = new Vector3[initialVertices.Length];
         vertexVelocities = new Vector3[initialVertices.Length];
         for (int i = 0; i < initialVertices.Length; i++)
@@ -39,79 +57,86 @@ public class Jellyfier : MonoBehaviour
         }
     }
 
-	private void Update()
-	{
+    private void OnEnable()
+    {
+        squeeze.OnSqueeze += SetViscocity;
+    }
+
+    private void OnDisable()
+    {
+        squeeze.OnSqueeze -= SetViscocity;
+    }
+
+    /// <summary>
+    /// Update the positions of the vertices based on their velocities.
+    /// </summary>
+    private void Update()
+    {
         UpdateVertices();
     }
 
-	private void UpdateVertices()
-	{
-		//We are looping through every vertice  update them depending on their velocity.
+    /// <summary>
+    /// Update the positions of the vertices based on their velocities.
+    /// </summary>
+    private void UpdateVertices()
+    {
         for (int i = 0; i < currentVertices.Length; i++)
-		{
-            //Before we add the current velocity to the vertice we need to make sure that
-            //we consider the fact that our object is a jelly and should be able to bounce back 
-            //to do so we first calculate the displacement value. 
-            //Since we saved the initial form of the mesh we can use this to revert back to the inital 
-            //position over time
+        {
             Vector3 currentDisplacement = currentVertices[i] - initialVertices[i];
             vertexVelocities[i] -= currentDisplacement * jiggle * Time.deltaTime;
 
-            //In order for us to be able to stop bouncing at one point we need to reduce
-            //the velocity over time. 
             vertexVelocities[i] *= 1f - elasticity * Time.deltaTime;
             currentVertices[i] += vertexVelocities[i] * Time.deltaTime;
-
         }
 
-		//We then need to set our mesh.vertices to the current vertices 
-		//in order to be able to see a change.
         mesh.vertices = currentVertices;
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
         mesh.RecalculateTangents();
-
     }
 
-    public void OnCollisionStay(Collision other)
+    /// <summary>
+    /// Apply pressure to the mesh when it collides with another object.
+    /// </summary>
+    /// <param name="other">The object that the mesh collided with.</param>
+    void OnTriggerStay(Collider other)
     {
-        Debug.Log($"Collision with {other.gameObject.name}");
-        ContactPoint[] collisonPoints = other.contacts;
-        for (int i = 0; i < collisonPoints.Length; i++)
-        {
-            Vector3 inputPoint = collisonPoints[i].point + (collisonPoints[i].point * .1f);
-            ApplyPressureToPoint(inputPoint, viscocity);
-        }
+        Vector3 closestPoint = other.ClosestPoint(transform.position);
+        Vector3 inputPoint = closestPoint + (closestPoint * .1f);
+        ApplyPressureToPoint(inputPoint, currentViscocity);
     }
 
-    public void ApplyPressureToPoint(Vector3 _point, float _pressure)
+    /// <summary>
+    /// Apply pressure to a specific point on the mesh.
+    /// </summary>
+    /// <param name="point">The point to apply pressure to.</param>
+    /// <param name="pressure">The amount of pressure to apply.</param>
+    public void ApplyPressureToPoint(Vector3 point, float pressure)
     {
-        Debug.Log("Point: " + _point + " Pressure: " + _pressure);
-        //We need to loop through every single vertice and apply the pressure to it.
         for (int i = 0; i < currentVertices.Length; i++)
         {
-            ApplyPressureToVertex(i, _point, _pressure);
+            ApplyPressureToVertex(i, point, pressure);
         }
     }
 
-    public void ApplyPressureToVertex(int _index, Vector3 _position, float _pressure)
+    /// <summary>
+    /// Apply pressure to a specific vertex on the mesh.
+    /// </summary>
+    /// <param name="index">The index of the vertex to apply pressure to.</param>
+    /// <param name="position">The position of the point to apply pressure to.</param>
+    /// <param name="pressure">The amount of pressure to apply.</param>
+    public void ApplyPressureToVertex(int index, Vector3 position, float pressure)
     {
-        //In order to know how much pressure we need to apply to each vertice we need to 
-        //calculate the distance between our vertice and the point where our extended finger (mouse thingey) 
-        //touched our mesh
-        Vector3 distanceVerticePoint = currentVertices[_index] - transform.InverseTransformPoint(_position);
-
-        //now begins fun physiquee part.... we need to make use of the Inverse Square Law
-        //we do this by dividing the pressure by the distance squared into an adapted pressure
-        //TODO: CHANGE
-        float adaptedPressure = _pressure / (1f + distanceVerticePoint.sqrMagnitude);
-
-        //What is left to do now is to use this pressure to calculate a velocity for vertices.
-        //TODO - First claculate acceleration with mass acceleration = force / mass and then get the
-        //velocity by calculating acceleration * Time.deltaTime;
+        Vector3 distanceVerticePoint = currentVertices[index] - transform.InverseTransformPoint(position);
+        float adaptedPressure = pressure / (1f + distanceVerticePoint.sqrMagnitude);
         float velocity = adaptedPressure * Time.deltaTime;
-        //Our velocity now still needs a direction, we can calculate this using the
-        //normalized distance vertex point from earlier
-        vertexVelocities[_index] += distanceVerticePoint.normalized * velocity;
+
+        vertexVelocities[index] += distanceVerticePoint.normalized * velocity;
+    }
+
+    public void SetViscocity(float viscocityPercentage)
+    {
+        // set the current viscocity taking into consideration the maximum viscocity and the minimum being the original viscocity
+        currentViscocity = Mathf.Lerp(viscocity, maxViscocity, viscocityPercentage);
     }
 }
