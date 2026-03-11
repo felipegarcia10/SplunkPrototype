@@ -240,7 +240,6 @@ GameObject:
   - component: {fileID: 3341052069308693539}
   - component: {fileID: 6754154818634231243}
   - component: {fileID: 169857281101712192}
-  - component: {fileID: 1661386444187388148}
   m_Layer: 6
   m_Name: Core
   m_TagString: Untagged
@@ -341,27 +340,6 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!135 &1661386444187388148
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3023795829004145397}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Radius: 0.9
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4306670762556291835
 GameObject:
@@ -886,7 +864,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.4
+  m_Radius: 0.3
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &3183794752100815326
 Rigidbody:
@@ -896,7 +874,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6534230987394567765}
   serializedVersion: 5
-  m_Mass: 1
+  m_Mass: 5
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -988,9 +966,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e036939f6f13e164099e9b776b0fff35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Jellyfier
-  bounceSpeed: 60
-  fallForce: 15
-  stiffness: 1
+  jiggle: 60
+  viscocity: 25
+  elasticity: 1
 --- !u!1 &7165599313242192420
 GameObject:
   m_ObjectHideFlags: 0
